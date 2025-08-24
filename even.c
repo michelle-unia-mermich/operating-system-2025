@@ -33,8 +33,6 @@ static void on_int(int sig) {
     write(STDOUT_FILENO, msg, sizeof(msg) - 1);
 }
 
-
-
 int main(int argc, char *argv[]){
 
     if (argc!= 2) {
@@ -69,12 +67,10 @@ int main(int argc, char *argv[]){
     - then when we do sigaction(SIGINT, &sa, NULL); -> we have the OS copy the info for SIGINT signal
     */
 
-    printf("PID: %d\n", getpid());
-    fflush(stdout);
+    //printf("PID: %d\n", getpid());
 
     for (long i=0; i<n; i++) {
-        printf("%ld\n", 2*i);
-        fflush(stdout); //force the output to be written immediately BEFORE the sleep        
+        printf("%ld\n", 2*i);     
         sleep(5);              
     }
     return 0;
