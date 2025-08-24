@@ -21,7 +21,17 @@
 #define NL 100			/* input buffer size */
 char            line[NL];	/* command input buffer */
 
-int job_counter = 1;  // Global var: counter for background jobs
+typedef struct {
+    int job_id;
+    pid_t pid;
+    char cmd[NL];   //this is opetional though, to store command string
+} Job;
+
+// Global vars: counter for background jobs
+#define MAX_JOBS 100
+Job jobs[MAX_JOBS];
+int job_count = 0;
+int next_job_id = 1;
 
 void sigchld_handler(int sig) {
   /*
@@ -35,8 +45,17 @@ void sigchld_handler(int sig) {
 
     //Loop to reap all terminated children
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-        printf("[%d]+ Done  PID: %d\n", job_counter++, pid);
-        fflush(stdout);
+      for (int j = 0; j < job_count; j++) {
+        if (jobs[j].pid == pid) {
+          printf("[%d]+ Done                 %s\n", jobs[j].job_id, jobs[j].cmd);
+          fflush(stdout);
+
+          //to remove job by "compacting"
+          jobs[j] = jobs[job_count - 1];
+          job_count--;
+          break;
+            }
+        }
     }
 }
 
@@ -136,9 +155,26 @@ int main(int argk, char *argv[], char *envp[])
             }
         } else {
             // background: report job number & PID immediately
-            printf("[%d] %d\n", job_counter++, frkRtnVal);
+            jobs[job_count].job_id = next_job_id++;
+            jobs[job_count].pid = frkRtnVal;
+            
+            /*
+            Next step: we can do snprintf(jobs[job_count].cmd, NL, "%s", v[0]);
+            - but that will only print out the command name (since we do v[0]), not the full command with arguments
+            - aka will only print out "sleep" but not "sleep 2"
+            - so we use this approach
+            */
+           //Build full command string (without &)
+            char cmdline[NL] = "";
+            for (int k = 0; v[k] != NULL; k++) {
+                strcat(cmdline, v[k]);
+                if (v[k+1] != NULL) strcat(cmdline, " ");
+            }
+            snprintf(jobs[job_count].cmd, NL, "%s", cmdline);
+            
+            printf("[%d] %d\n", jobs[job_count].job_id, frkRtnVal);
             fflush(stdout);
-            // SIGCHLD handler will report when job actually finishes
+            job_count++;
         }
         // REMOVE PRINTF STATEMENT BEFORE SUBMISSION
         //printf("%s done \n", v[0]);
