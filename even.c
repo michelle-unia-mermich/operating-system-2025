@@ -33,6 +33,7 @@ static void on_int(int sig) {
     write(STDOUT_FILENO, msg, sizeof(msg) - 1);
 }
 
+
 int main(int argc, char *argv[]){
 
     if (argc!= 2) {
@@ -68,9 +69,11 @@ int main(int argc, char *argv[]){
     */
 
     //printf("PID: %d\n", getpid());
+    //fflush(stdout);
 
     for (long i=0; i<n; i++) {
-        printf("%ld\n", 2*i);     
+        printf("%ld\n", 2*i);
+        //fflush(stdout); //force the output to be written immediately BEFORE the sleep        
         sleep(5);              
     }
     return 0;
